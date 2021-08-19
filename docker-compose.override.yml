@@ -1,0 +1,11 @@
+services:
+
+    backend_local:
+        build: ./
+        restart: always
+        ports:
+            - 8000:80
+
+networks:
+    traefik-public:
+        external: false
