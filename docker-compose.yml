@@ -1,23 +1,39 @@
+version: '3'
+
 services:
+  traefik:
+    # The latest official supported Traefik docker image
+    image: traefik:v2.5.1
+    # Enables the Traefik Dashboard and tells Traefik to listen to docker
+    # enable --log.level=INFO so we can see what Traefik is doing in the log files
+    ports:
+      # Exposes port 80 for incomming web requests
+      - "80:80"
+      - "443:443"
+      # The Web UI port http://0.0.0.0:8080 (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Copies the Let's Encrypt certificate locally for ease of backing up
+      - ./letsencrypt:/letsencrypt
+       # Mounts the Traefik static configuration inside the Traefik container
+      - ./traefik.dns.yml:/etc/traefik/traefik.yml
+    environment:
+      - "DO_AUTH_TOKEN=57eb5ba3a44a22e673b2d300f39c863bbd9dce601b621133a9c84513eb43df78"
 
-    app:
-        image: app:latest
-        restart: always
-        labels:
-            # Enable Traefik for this specific "backend" service
-            - traefik.enable=false
-            # Define the port inside of the Docker service to use
-            - traefik.http.service.appName.loadbalancer.server.port=80
-            # Make Traefik use this domain in HTTP ***
-            - traefik.http.routers.appName-http.entrypoints=http
-            - traefik.http.routers.appName-http.rule=Host(`excelanalysis.online`)
-            # Use the traefik-public network (declared below)
-            - traefik.docker.network=traefik-public
-        networks:
-            # Use the public network created to be shared between Traefik and
-            # any other service that needs to be publicly available with HTTPS
-            - traefik-public
-
-networks:
-    traefik-public:
-        external: true
+# Add the catapp service
+  app:
+     image: 10hith/eapp:latest
+     labels:
+       - "traefik.enable=true"
+       - "traefik.http.routers.app.rule=Host(`www.excelanalysis.online`)"
+       - "traefik.http.routers.app.service=app"
+       - "traefik.http.services.app.loadbalancer.server.port=80"
+       - "traefik.http.routers.app.entrypoints=websecure"
+       - "traefik.http.routers.app.tls.certresolver=myresolver"
+       - "traefik.http.routers.app-http.entrypoints=web"
+       - "traefik.http.routers.app-http.rule=Host(`www.excelanalysis.online`)"
+       - "traefik.http.routers.app-http.middlewares=app-https"
+       - "traefik.http.middlewares.app-https.redirectscheme.scheme=https"
+       - "traefik.http.routers.app.tls=true"
