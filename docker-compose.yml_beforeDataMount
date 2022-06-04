@@ -25,11 +25,8 @@ services:
 # Add the catapp service
   app:
      image: 10hith/eapp:latest
-     volumes:
-       - /data:/data/
      environment:
        - WEB_CONCURRENCY=1
-       - DATA_PATH=/data
      labels:
        - "traefik.enable=true"
        - "traefik.http.routers.app.rule=Host(`www.excelanalysis.online`)"
@@ -44,13 +41,8 @@ services:
        - "traefik.http.routers.app.tls=true"
 # Adding whoamI
   crimeapp:
-     image: 10hith/crimeapp
-     volumes:
-       - /data:/data/
-     environment:
-       - DATA_PATH=/data
-       - API_PORT=80
-       - API_HOST=app
+#     image: traefik/whoami
+     image: nginxdemos/hello
      labels:
        - "traefik.enable=true"
        - "traefik.http.routers.crimeapp.rule=Host(`www.excel-analysis.com`)"
